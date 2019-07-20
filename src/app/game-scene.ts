@@ -1,4 +1,4 @@
-import { Physics, Scene, Types } from 'phaser';
+import { GameObjects, Physics, Scene, Types } from 'phaser';
 
 enum FileKeys {
 	Bomb = 'bomb',
@@ -11,7 +11,9 @@ enum FileKeys {
 type CursorKeys = Types.Input.Keyboard.CursorKeys;
 type ImageFileConfig = Types.Loader.FileTypes.ImageFileConfig;
 type PhysicsSprite = Physics.Arcade.Sprite;
+type Group = Physics.Arcade.Group;
 type StaticGroup = Physics.Arcade.StaticGroup;
+type Text = GameObjects.Text;
 
 const playerSpeed = 160;
 
@@ -19,12 +21,20 @@ export class GameScene extends Scene {
 	protected _cursorKeys: CursorKeys;
 	protected _platforms: StaticGroup;
 	protected _player: PhysicsSprite;
+	protected _score = 0;
+	protected _scoreText: Text;
+	protected _stars: Group;
 
 	create(): void {
 		this.add.image(0, 0, FileKeys.Sky).setOrigin(0, 0);
 		this.createPlatforms();
 		this.createPlayer();
+		this.createStars();
+		this._scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
+
 		this.physics.add.collider(this._player, this._platforms);
+		this.physics.add.collider(this._stars, this._platforms);
+		this.physics.add.overlap(this._player, this._stars, this.collectStar, null, this);
 
 		this._cursorKeys = this.input.keyboard.createCursorKeys();
 	}
@@ -43,6 +53,11 @@ export class GameScene extends Scene {
 
 	update(): void {
 		this.updatePlayer();
+	}
+
+	protected collectStar(player: PhysicsSprite, star: PhysicsSprite): void {
+		star.disableBody(true, true);
+		this._scoreText.setText(`Score: ${++this._score}`);
 	}
 
 	protected createPlatforms(): void {
@@ -79,6 +94,18 @@ export class GameScene extends Scene {
 			frames: this.anims.generateFrameNumbers(FileKeys.Player, { start: 5, end: 8 }),
 			frameRate: 10,
 			repeat: -1
+		});
+	}
+
+	protected createStars(): void {
+		this._stars = this.physics.add.group({
+			key: FileKeys.Star,
+			repeat: 11,
+			setXY: { x: 12, y: 0, stepX: 70 }
+		});
+
+		this._stars.children.iterate((star: PhysicsSprite) => {
+			star.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
 		});
 	}
 
