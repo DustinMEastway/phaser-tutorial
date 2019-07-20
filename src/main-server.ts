@@ -12,6 +12,8 @@ server.use(webpackDevMiddleware(webpack(config), {
 	publicPath: config.output.publicPath
 }));
 
+server.use(express.static(`${__dirname}/assets`));
+
 server.listen(port, () => {
 	console.log(`Server listening on port ${port}!\n`);
 });
